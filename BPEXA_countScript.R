@@ -7,7 +7,7 @@ library(org.Mm.eg.db)
 library(RColorBrewer)
 
 #Read tsv file:
-table<-read.table("total_countTable.tsv", header=T, row.names=1)
+table<-read.table("Counts/total_countTable.tsv", header=T, row.names=1)
 specialAttr<-tail(table, 5)
 countTable<-head(table, -5)
 
@@ -29,13 +29,13 @@ ObjectDGE<-DGEList(counts.keep.filtered)
 logcounts<-cpm(ObjectDGE, log=T)
 
 #BARPLOT OF LIBRARY SIZES:
-png(file="Barplot_LibrarySizes.png")
+png(file="Plots/Barplot_LibrarySizes.png")
 barplot(ObjectDGE$samples$lib.size,names=colnames(ObjectDGE),las=2)
 title("Barplot of library sizes")
 dev.off()
 
 #MDSPLOT:
-png(file="MDSPlot_DGE.png")
+png(file="Plots/MDSPlot_DGE.png")
 plotMDS(ObjectDGE)
 dev.off()
 
@@ -45,7 +45,7 @@ select_var<-names(sort(var_genes, decreasing = T))[1:500]
 highly_variable_lcpm <- logcounts[select_var,]
 mypalette <- brewer.pal(11,"RdYlBu")
 morecols <- colorRampPalette(mypalette)
-png(file="High_var_genes.heatmap.png", width=900, height=600, res=100)
+png(file="Plots/High_var_genes.heatmap.png", width=900, height=600, res=100)
 heatmap.2(highly_variable_lcpm,
           col=rev(morecols(50)),
           trace="none", 
@@ -60,13 +60,13 @@ NormObjectDGE<-calcNormFactors(ObjectDGE)
 remove(ObjectDGE)
 
 #Voom transform:
-png(file="VoomPlot_meanVariance.png")
+png(file="Plots/VoomPlot_meanVariance.png")
 voomObject<-voom(NormObjectDGE, plot=T)
 dev.off()
 #remove(NormObjectDGE)
 
 #BOXPLOT UNNORMALISED vs NORMALISED:
-png(file="Boxplot_VoomTransformedvsUnnormalised.png")
+png(file="Plots/Boxplot_VoomTransformedvsUnnormalised.png")
 par(mfrow=c(1,2))
 boxplot(logcounts, xlab="", ylab="Log2 counts per million",las=2,main="Unnormalised logCPM")
 abline(h=median(logcounts),col="blue")

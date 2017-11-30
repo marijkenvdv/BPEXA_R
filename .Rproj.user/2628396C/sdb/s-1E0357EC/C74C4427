@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#Import libaries:\nlibrary(edgeR)\nlibrary(limma)\nlibrary(Glimma)\nlibrary(gplots)\nlibrary(org.Mm.eg.db)\nlibrary(RColorBrewer)\n\n#Read tsv file:\ntable<-read.table(\"Counts/total_countTable.tsv\", header=T, row.names=1)\nspecialAttr<-tail(table, 5)\ncountTable<-head(table, -5)\n\n#Remove lowly expressed genes:\nmyCPM<- cpm(countTable)\nthresh<- myCPM > 0.5\nkeep<- rowSums(thresh) >= 2\ncounts.keep<- countTable[keep,]\n\n#Remove globin genes\nglobin<-c(\"HBB\", \"B2M\", \"HBA1\", \"HBA2\", \"ARHGDIB\")\ncounts.keep.filtered<-counts.keep[!rownames(counts.keep) %in% globin, ]\n\n#Clear some memory:\nremove(countTable, thresh, keep, table, myCPM)\n\n#DGEList:\nObjectDGE<-DGEList(counts.keep.filtered)\nlogcounts<-cpm(ObjectDGE, log=T)\n\n#BARPLOT OF LIBRARY SIZES:\npng(file=\"Plots/Barplot_LibrarySizes.png\")\nbarplot(ObjectDGE$samples$lib.size,names=colnames(ObjectDGE),las=2)\ntitle(\"Barplot of library sizes\")\ndev.off()\n\n#MDSPLOT:\npng(file=\"Plots/MDSPlot_DGE.png\")\nplotMDS(ObjectDGE)\ndev.off()\n\n#HEATMAP top 500 most variable genes:\nvar_genes<-apply(logcounts, 1, var)\nselect_var<-names(sort(var_genes, decreasing = T))[1:500]\nhighly_variable_lcpm <- logcounts[select_var,]\nmypalette <- brewer.pal(11,\"RdYlBu\")\nmorecols <- colorRampPalette(mypalette)\npng(file=\"Plots/High_var_genes.heatmap.png\", width=900, height=600, res=100)\nheatmap.2(highly_variable_lcpm,\n          col=rev(morecols(50)),\n          trace=\"none\", \n          main=\"Top 500 most variable genes across samples\",\n          scale=\"row\", \n          ColSideColors=c(\"Red\",\"green\",\"Yellow\"))\ndev.off()\nremove(var_genes, select_var, mypalette, morecols, highly_variable_lcpm)\n\n#Normalise:\nNormObjectDGE<-calcNormFactors(ObjectDGE)\nremove(ObjectDGE)\n\n#Voom transform:\npng(file=\"Plots/VoomPlot_meanVariance.png\")\nvoomObject<-voom(NormObjectDGE, plot=T)\ndev.off()\n#remove(NormObjectDGE)\n\n#BOXPLOT UNNORMALISED vs NORMALISED:\npng(file=\"Plots/Boxplot_VoomTransformedvsUnnormalised.png\")\npar(mfrow=c(1,2))\nboxplot(logcounts, xlab=\"\", ylab=\"Log2 counts per million\",las=2,main=\"Unnormalised logCPM\")\nabline(h=median(logcounts),col=\"blue\")\nboxplot(voomObject$E, xlab=\"\", ylab=\"Log2 counts per million\",las=2,main=\"Voom transformed logCPM\")\nabline(h=median(voomObject$E),col=\"blue\")\ndev.off()\nremove(logcounts)\n\n#Contrast matrices:\ncont.P1P2<-makeContrasts(P1vsP2=PT1-PT2, levels=voomObject$E)\ncont.P1P3<-makeContrasts(P1vsP3=PT1-PT3, levels=voomObject$E)\ncont.P2P3<-makeContrasts(P2vsP3=PT2-PT3, levels=voomObject$E)\ncont.matrix<-cbind(cont.P1P2,cont.P1P3,cont.P2P3)\nremove(cont.P1P2, cont.P1P3, cont.P2P3)\n\n\n#DEG matrix:\ncontrast.matrix <- cbind(PT1=c(1,0),PT2=c(0,1),\"PT3\"=c(-1,1))\ndesign<-cbind(V1=c(1,1,0),V2=c(0,0,1))\nfit <- lmFit(voomObject$E, design=design)\ncf<-contrasts.fit(fit, contrast.matrix)\ncf<-eBayes(cf)\n",
+    "created" : 1512038945848.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2434934460",
+    "id" : "C74C4427",
+    "lastKnownWriteTime" : 1512039099,
+    "last_content_update" : 1512039099189,
+    "path" : "~/BPEXA/BPEXA_R/BPEXA_countScript.R",
+    "project_path" : "BPEXA_countScript.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
